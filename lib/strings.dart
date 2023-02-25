@@ -6,6 +6,8 @@ class Strings {
   static const String noGameAvailable = "Noch kein Spiel bereit... :-(";
   static const String galleryTabTitle = "Gallerie";
   static const String settingTabTitle = "Einstellungen";
+  static const double textLineSpacing = 20;
+  static const double titleLineSpacing = 20;
   static const TextStyle textLines = TextStyle(
     fontSize: 50,
     fontStyle: FontStyle.italic,
@@ -14,7 +16,6 @@ class Strings {
     fontSize: 75,
     fontStyle: FontStyle.italic,
   );
-  static const double pictureHeight = 250;
   static const Card loadingCard = Card(
       clipBehavior: Clip.hardEdge,
       child: SizedBox(

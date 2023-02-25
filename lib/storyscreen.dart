@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'settings.dart';
 
 class StoryScreen extends StatefulWidget {
   final List<Widget> widgets;
@@ -19,7 +20,7 @@ class _StoryScreenState extends State<StoryScreen> {
     for(int i=0; i < widget.widgets.length; i++) {
       fadedWidgets.add(AnimatedOpacity(
           opacity: widget.visibleWidgets.elementAt(i) ? 1.0 : 0.0,
-          duration: const Duration(milliseconds: 700),
+          duration: Duration(milliseconds: Settings.textFadeTime),
           onEnd: () {
             if(i+1 < widget.widgets.length && mounted) { setState(() { widget.visibleWidgets[i+1] = true; }); } },
           child: Container(
@@ -28,7 +29,7 @@ class _StoryScreenState extends State<StoryScreen> {
       ));
     }
     Future.delayed(
-      const Duration(seconds: 1),
+      Duration(milliseconds: Settings.initialFadeTime),
         () {
           if(mounted) {setState(() {widget.visibleWidgets[0] = true;});}
         }
