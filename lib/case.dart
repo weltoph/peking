@@ -2,7 +2,6 @@ import 'dart:collection';
 
 import 'package:flutter/material.dart';
 import 'storyscreen.dart';
-import 'settings.dart';
 import 'strings.dart';
 import 'utilities.dart';
 import 'package:flutter/services.dart' show rootBundle;
@@ -21,6 +20,91 @@ class _GameState {
     initialLines: "broken-initial.txt",
     finalLines: "broken-final.txt"
   );
+
+  _Actors testActors = _Actors.construct(
+    [
+      _Actor(
+        name: "Christoph",
+        filePrefix: "christoph"
+      ),
+      _Actor(
+          name: "Christoph",
+          filePrefix: "christoph"
+      ),
+      _Actor(
+          name: "Christoph",
+          filePrefix: "christoph"
+      ),
+      _Actor(
+          name: "Christoph",
+          filePrefix: "christoph"
+      ),
+      _Actor(
+          name: "Christoph",
+          filePrefix: "christoph"
+      ),
+      _Actor(
+          name: "Christoph",
+          filePrefix: "christoph"
+      ),
+      _Actor(
+          name: "Christoph",
+          filePrefix: "christoph"
+      ),
+      _Actor(
+          name: "Christoph",
+          filePrefix: "christoph"
+      ),
+      _Actor(
+          name: "Christoph",
+          filePrefix: "christoph"
+      ),
+      _Actor(
+          name: "Christoph",
+          filePrefix: "christoph"
+      ),
+      _Actor(
+          name: "Christoph",
+          filePrefix: "christoph"
+      ),
+      _Actor(
+          name: "Christoph",
+          filePrefix: "christoph"
+      ),
+      _Actor(
+          name: "Christoph",
+          filePrefix: "christoph"
+      ),
+      _Actor(
+          name: "Christoph",
+          filePrefix: "christoph"
+      ),
+      _Actor(
+          name: "Christoph",
+          filePrefix: "christoph"
+      ),
+      _Actor(
+          name: "Christoph",
+          filePrefix: "christoph"
+      ),
+      _Actor(
+          name: "Christoph",
+          filePrefix: "christoph"
+      ),
+      _Actor(
+          name: "Christoph",
+          filePrefix: "christoph"
+      ),
+    ], [
+    _Actor(
+        name: "Sam",
+        filePrefix: "sam"
+    ),
+    _Actor(
+        name: "Sam",
+        filePrefix: "sam"
+    ),
+  ]);
 }
 
 class _Actor {
@@ -59,10 +143,10 @@ class _Actors {
   ];
 
   static const List<String> dimensions = [
+    "scarf",
     "hat",
     "glasses",
     "scar",
-    "scarf",
   ];
 
   static const List<String> extraHouses = [
@@ -111,6 +195,164 @@ class _Actors {
         liar: liar,
         specialInformation: specialInformation);
   }
+
+  bool _getProperty(String which) {
+    assert(dimensions.contains(which));
+    int index = dimensions.indexOf(which);
+    return perpetrator.substring(index, index+1) == "1";
+  }
+
+  Future<Widget> constructLocation(String location) async {
+    assert(citizenHouses.contains(location));
+    List<Widget> finalChildren = List.empty(growable: true);
+    finalChildren.add(StoryScreen.constructTitle(citizens[location]!.name));
+    finalChildren.add(StoryScreen.constructPicture("${citizens[location]!.filePrefix}talking.jpg"));
+    // does not know anything
+    if(!information.containsKey(location)) {
+      finalChildren.add(StoryScreen.constructLine("I don't know anything!"));
+    } else {
+      String dimension = information[location] as String;
+      bool result = _getProperty(dimension);
+      if(liar == location) {
+        result = !result;
+      }
+      finalChildren.add(StoryScreen.constructLine("$dimension: $result"));
+    }
+    return StoryScreen(
+      widgets: finalChildren,
+    );
+  }
+
+  Future<Widget> constructWanted(BuildContext context) async {
+    return Scaffold(
+        appBar: AppBar(
+          leading: const BackButton(),
+        ),
+        body: GridView.count(
+          crossAxisCount: 3,
+          mainAxisSpacing: 20,
+          crossAxisSpacing: 20,
+          children: suspectPersons.entries.map(
+                  (e) => IconButton(
+                    onPressed: () {
+                      showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: const Text("Where are you looking?"),
+                              content: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(10),
+                                          child: ElevatedButton(
+                                            style: ButtonStyle(
+                                              backgroundColor: MaterialStateProperty.all(Colors.yellow),
+                                            ),
+                                            child: Container(
+                                            ),
+                                            onPressed: () => Navigator.of(context).pop(),
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.all(10),
+                                          child: ElevatedButton(
+                                            style: ButtonStyle(
+                                              backgroundColor: MaterialStateProperty.all(Colors.red),
+                                            ),
+                                            child: Container(
+                                            ),
+                                            onPressed: () => Navigator.of(context).pop(),
+                                          ),
+                                        ),
+                                      ]
+                                  ),
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(10),
+                                        child: ElevatedButton(
+                                          style: ButtonStyle(
+                                            backgroundColor: MaterialStateProperty.all(Colors.green),
+                                          ),
+                                          child: Container(
+                                          ),
+                                          onPressed: () => Navigator.of(context).pop(),
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.all(10),
+                                        child: ElevatedButton(
+                                          style: ButtonStyle(
+                                            backgroundColor: MaterialStateProperty.all(Colors.blue),
+                                          ),
+                                          child: Container(
+                                          ),
+                                          onPressed: () => Navigator.of(context).pop(),
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                ],
+                              ),
+                            );
+                          });
+                    },
+                    icon: Image.asset("pictures/${e.value.filePrefix}${e.key}.jpg", width: 100,)
+                  )
+          ).toList(),
+        )
+    );
+  }
+
+  Future<Widget> constructOldMan() async {
+    List<Widget> finalChildren = List.empty(growable: true);
+    finalChildren.add(StoryScreen.constructTitle(specialInformation["temple"]!.name));
+    // does not know anything
+    if(!information.containsKey(liar)) {
+      finalChildren.add(StoryScreen.constructPicture("${specialInformation["temple"]!.filePrefix}content.jpg"));
+      finalChildren.add(StoryScreen.constructLine("No evil, so sleepy!"));
+    } else {
+      finalChildren.add(StoryScreen.constructPicture("${specialInformation["temple"]!.filePrefix}mad.jpg"));
+      finalChildren.add(StoryScreen.constructLine("No time for sleep!"));
+      finalChildren.add(StoryScreen.constructLine("${citizens[liar]!.name} at ${Strings.locationNames[liar]} is evil."));
+      finalChildren.add(StoryScreen.constructLine("For Justice!"));
+    }
+    return StoryScreen(
+      widgets: finalChildren,
+    );
+  }
+
+  Widget _getSizedAvatar(_Actor of) {
+    return Image.asset(
+      "pictures/${of.filePrefix}avatar.jpg",
+      height: 100,
+    );
+  }
+
+  Widget constructCardTitle(String location) {
+    assert(citizenHouses.contains(location) || extraHouses.contains(location));
+    _Actor who = (citizenHouses.contains(location) ? citizens[location] : specialInformation[location]) as _Actor;
+    return Row(
+      children: [
+        SizedBox(
+          width: 150,
+          child: _getSizedAvatar(who),
+        ),
+        Text(
+          Strings.locationNames[location] as String,
+          style: const TextStyle(
+            fontFamily: "Shanghai",
+            fontSize: 30,
+          )
+        )
+      ],
+    );
+  }
+
 }
 
 class _Case {
@@ -122,52 +364,20 @@ class _Case {
 
   const _Case({required this.title, this.initialPicture, required this.initialLines, this.finalPicture, required this.finalLines});
 
-  Future<StoryScreen> constructStoryScreen(String? picture, String text) async {
+  Future<StoryScreen> getInitial() async => _constructStoryScreen(initialPicture, initialLines);
+  Future<StoryScreen> getFinal() async => _constructStoryScreen(finalPicture, finalLines);
+
+  Future<StoryScreen> _constructStoryScreen(String? picture, String text) async {
     List<Widget> finalChildren = List.empty(growable: true);
-    finalChildren.add(
-      Center(
-        child: Padding(
-          padding: const EdgeInsets.only(
-            top: Strings.titleLineSpacing,
-            bottom: Strings.titleLineSpacing,
-          ),
-          child: Text(
-            title,
-            style: Strings.titleLine,
-            textAlign: TextAlign.center,
-          ),
-        ),
-      )
-    );
+    finalChildren.add(StoryScreen.constructTitle(title));
     if(picture != null) {
-      finalChildren.add(
-        Center(
-          child: Image.asset(
-            "pictures/$picture",
-            height: Settings.pictureHeight,
-          ),
-        )
-      );
+      finalChildren.add(StoryScreen.constructPicture(picture));
     }
     Future<String> content = rootBundle.loadString("texts/$text");
     List<String> lines = (await content).split("\n");
     for(String line in lines) {
       if(line.isEmpty) { continue; }
-      finalChildren.add(
-        Center(
-          child: Padding(
-            padding: const EdgeInsets.only(
-              top: Strings.textLineSpacing,
-              bottom: Strings.textLineSpacing,
-            ),
-            child: Text(
-              line,
-              style: Strings.textLines,
-              textAlign: TextAlign.center,
-            ),
-          ),
-        )
-      );
+      finalChildren.add(StoryScreen.constructLine(line));
     }
     return StoryScreen(widgets: finalChildren);
   }
@@ -193,7 +403,6 @@ class _CaseCard extends StatelessWidget {
             );
           },
           child: SizedBox(
-            width: double.infinity,
             height: 150,
             child: Center(child: child),
           )
@@ -212,38 +421,39 @@ class _GameTabState extends State<GameTab> {
     });
   }
 
+  FutureBuilder<Widget> _constructCard(Future<Widget> Function() f, Widget title) {
+    return FutureBuilder<Widget>(
+        future: f(),
+        builder: (context, AsyncSnapshot<Widget> widget) {
+          if(widget.hasData) {
+            return _CaseCard(
+              display: widget.requireData,
+              child: title,
+            );
+          } else {
+            return Strings.loadingCard;
+          }
+        }
+    );
+  }
+
   Future<Widget> _getCase(BuildContext context) async {
     // check for stored case
     // otherwise create case
     // construct case
-    return Column(
+    return ListView(
+      scrollDirection: Axis.vertical,
       children: [
-        FutureBuilder<Widget>(
-          future: _game!.testCase.constructStoryScreen(_game!.testCase.initialPicture, _game!.testCase.initialLines),
-          builder: (context, AsyncSnapshot<Widget> widget) {
-            if(widget.hasData) {
-              return _CaseCard(
-                display: widget.requireData,
-                child: const Text("initial"),
-              );
-            } else {
-              return Strings.loadingCard;
-            }
-          }
-        ),
-        FutureBuilder<Widget>(
-            future: _game!.testCase.constructStoryScreen(_game!.testCase.finalPicture, _game!.testCase.finalLines),
-            builder: (context, AsyncSnapshot<Widget> widget) {
-              if(widget.hasData) {
-                return _CaseCard(
-                  display: widget.requireData,
-                  child: const Text("final"),
-                );
-              } else {
-                return Strings.loadingCard;
-              }
-            }
-        ),
+        _constructCard(() => _game!.testCase.getInitial(), const Text("initial")),
+        _constructCard(() => _game!.testActors.constructLocation("washroom"), _game!.testActors.constructCardTitle("washroom")),
+        _constructCard(() => _game!.testActors.constructLocation("beauty"), _game!.testActors.constructCardTitle("beauty")),
+        _constructCard(() => _game!.testActors.constructLocation("jewelry"), _game!.testActors.constructCardTitle("jewelry")),
+        _constructCard(() => _game!.testActors.constructLocation("restaurant"), _game!.testActors.constructCardTitle("restaurant")),
+        _constructCard(() => _game!.testActors.constructLocation("port"), _game!.testActors.constructCardTitle("port")),
+        _constructCard(() => _game!.testActors.constructLocation("palace"), _game!.testActors.constructCardTitle("palace")),
+        _constructCard(() => _game!.testActors.constructOldMan(), _game!.testActors.constructCardTitle("temple")),
+        _constructCard(() => _game!.testActors.constructWanted(context), const Text("wanted")),
+        _constructCard(() => _game!.testCase.getFinal(), const Text("final")),
       ],
     );
   }

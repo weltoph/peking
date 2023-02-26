@@ -8,7 +8,7 @@ List<T> choose<T>(List<T> from, int many) {
   List<T> result = List.empty(growable: true);
   for(int i = 0; i < many; i++) {
     int pick = _random.nextInt(from.length - i);
-    result.add(from[indices[indices.removeAt(pick)]]);
+    result.add(from[indices.removeAt(pick)]);
   }
   return result;
 }

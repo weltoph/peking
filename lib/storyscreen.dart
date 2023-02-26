@@ -1,9 +1,51 @@
 import 'package:flutter/material.dart';
 import 'settings.dart';
+import 'strings.dart';
 
 class StoryScreen extends StatefulWidget {
   final List<Widget> widgets;
   late final List<bool> visibleWidgets;
+  
+  static Widget constructTitle(String text) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.only(
+          top: Strings.titleLineSpacing,
+          bottom: Strings.titleLineSpacing,
+        ),
+        child: Text(
+          text,
+          style: Strings.titleLine,
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+  
+  static Widget constructPicture(String picture) {
+    return Center(
+      child: Image.asset(
+        "pictures/$picture",
+        height: Settings.pictureHeight,
+      ),
+    );
+  }
+  
+  static Widget constructLine(String line) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.only(
+          top: Strings.textLineSpacing,
+          bottom: Strings.textLineSpacing,
+        ),
+        child: Text(
+          line,
+          style: Strings.textLines,
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
 
   StoryScreen({super.key, required this.widgets}) {
     visibleWidgets = List.filled(widgets.length, false);

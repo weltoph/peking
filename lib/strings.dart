@@ -19,10 +19,20 @@ class Strings {
   static const Card loadingCard = Card(
       clipBehavior: Clip.hardEdge,
       child: SizedBox(
-            width: double.infinity,
-            height: 150,
-            child: Center(child: Text("waiting for data"),
+          height: 150,
+          child: Center(
+            child: CircularProgressIndicator(),
           )
       )
   );
+  static const Map<String, String> locationNames = {
+    "washroom": "Wäscherei",
+    "beauty": "Schönheitssalon",
+    "jewelry": "Juwelierladen",
+    "restaurant": "Restaurant",
+    "port": "Hafen",
+    "palace": "Jadepalast",
+    "temple": "Temple",
+    "market": "Markt",
+  };
 }
