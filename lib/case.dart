@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'storyscreen.dart';
 import 'strings.dart';
 import 'utilities.dart';
+import 'settings.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
 class GameTab extends StatefulWidget {
@@ -185,6 +186,8 @@ class _Actors {
     Map<String, String> information = Map.fromIterables(choose(citizenHouses, 4), dimensions);
     String liar = pick(citizenHouses);
     Map<String, _Actor> specialInformation = Map.fromIterables(extraHouses, choose(animals, 2));
+    debugPrint(perpetrator);
+    debugPrint(hidingPlace);
     return _Actors._(
         perpetrator: perpetrator,
         hidingPlace: hidingPlace,
@@ -223,7 +226,33 @@ class _Actors {
     );
   }
 
-  Future<Widget> constructWanted(BuildContext context) async {
+  AlertDialog Function(BuildContext) _searchDialog(String which, _Actor actor) {
+    return (BuildContext context) {
+      return AlertDialog(
+        title: const Text("Where are you looking?"),
+        content:
+        Row(
+          mainAxisSize: MainAxisSize.min,
+            children: hidingPlaces.map(
+                    (e) => Container(
+                        width: 100,
+                        height: 100,
+                        padding: const EdgeInsets.all(10),
+                        child: ElevatedButton(
+                          style: ButtonStyle(
+                              backgroundColor: MaterialStateProperty.all(Settings.hidingPlacesColors[e])
+                          ),
+                          onPressed: () {Navigator.of(context).pop(which == perpetrator && e == hidingPlace);},
+                          child: Container(),
+                        )
+                    )
+            ).toList()
+        )
+      );
+    };
+  }
+
+  Future<Widget> constructWanted(BuildContext context, Widget finalScreen, Widget failScreen) async {
     return Scaffold(
         appBar: AppBar(
           leading: const BackButton(),
@@ -233,76 +262,21 @@ class _Actors {
           mainAxisSpacing: 20,
           crossAxisSpacing: 20,
           children: suspectPersons.entries.map(
-                  (e) => IconButton(
-                    onPressed: () {
-                      showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              title: const Text("Where are you looking?"),
-                              content: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Row(
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.all(10),
-                                          child: ElevatedButton(
-                                            style: ButtonStyle(
-                                              backgroundColor: MaterialStateProperty.all(Colors.yellow),
-                                            ),
-                                            child: Container(
-                                            ),
-                                            onPressed: () => Navigator.of(context).pop(),
-                                          ),
-                                        ),
-                                        Container(
-                                          padding: const EdgeInsets.all(10),
-                                          child: ElevatedButton(
-                                            style: ButtonStyle(
-                                              backgroundColor: MaterialStateProperty.all(Colors.red),
-                                            ),
-                                            child: Container(
-                                            ),
-                                            onPressed: () => Navigator.of(context).pop(),
-                                          ),
-                                        ),
-                                      ]
-                                  ),
-                                  Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(10),
-                                        child: ElevatedButton(
-                                          style: ButtonStyle(
-                                            backgroundColor: MaterialStateProperty.all(Colors.green),
-                                          ),
-                                          child: Container(
-                                          ),
-                                          onPressed: () => Navigator.of(context).pop(),
-                                        ),
-                                      ),
-                                      Container(
-                                        padding: const EdgeInsets.all(10),
-                                        child: ElevatedButton(
-                                          style: ButtonStyle(
-                                            backgroundColor: MaterialStateProperty.all(Colors.blue),
-                                          ),
-                                          child: Container(
-                                          ),
-                                          onPressed: () => Navigator.of(context).pop(),
-                                        ),
-                                      ),
-                                    ],
-                                  )
-                                ],
-                              ),
-                            );
-                          });
-                    },
-                    icon: Image.asset("pictures/${e.value.filePrefix}${e.key}.jpg", width: 100,)
-                  )
+                  (e) => GestureDetector(
+                  onTap: () {
+                    showDialog(
+                        context: context,
+                        builder: _searchDialog(e.key, e.value))
+                        .then((value) {
+                          if(value == null) { return; }
+                          Navigator.of(context).push(
+                              MaterialPageRoute(builder: (BuildContext context) {
+                                return value ? finalScreen : failScreen;
+                              },));
+                    });
+                  },
+                  child: Image.asset("pictures/${e.value.filePrefix}${e.key}.jpg", width: 100,)
+              )
           ).toList(),
         )
     );
@@ -421,19 +395,10 @@ class _GameTabState extends State<GameTab> {
     });
   }
 
-  FutureBuilder<Widget> _constructCard(Future<Widget> Function() f, Widget title) {
-    return FutureBuilder<Widget>(
-        future: f(),
-        builder: (context, AsyncSnapshot<Widget> widget) {
-          if(widget.hasData) {
-            return _CaseCard(
-              display: widget.requireData,
-              child: title,
-            );
-          } else {
-            return Strings.loadingCard;
-          }
-        }
+  Future<Widget> _constructCard(Future<Widget> Function() f, Widget title) async {
+    return _CaseCard(
+      display: await f(),
+      child: title,
     );
   }
 
@@ -441,20 +406,23 @@ class _GameTabState extends State<GameTab> {
     // check for stored case
     // otherwise create case
     // construct case
+    List<Widget> cards = await Future.wait(
+        [
+          _game!.testCase.getFinal(),
+          _game!.testCase.getInitial(),
+          _constructCard(() => _game!.testActors.constructLocation("washroom"), _game!.testActors.constructCardTitle("washroom")),
+          _constructCard(() => _game!.testActors.constructLocation("beauty"), _game!.testActors.constructCardTitle("beauty")),
+          _constructCard(() => _game!.testActors.constructLocation("jewelry"), _game!.testActors.constructCardTitle("jewelry")),
+          _constructCard(() => _game!.testActors.constructLocation("restaurant"), _game!.testActors.constructCardTitle("restaurant")),
+          _constructCard(() => _game!.testActors.constructLocation("port"), _game!.testActors.constructCardTitle("port")),
+          _constructCard(() => _game!.testActors.constructLocation("palace"), _game!.testActors.constructCardTitle("palace")),
+          _constructCard(() => _game!.testActors.constructOldMan(), _game!.testActors.constructCardTitle("temple")),
+        ]
+    );
+    Widget wanted = await _constructCard(() => _game!.testActors.constructWanted(context, cards[0], cards[1]), const Text("wanted"));
     return ListView(
       scrollDirection: Axis.vertical,
-      children: [
-        _constructCard(() => _game!.testCase.getInitial(), const Text("initial")),
-        _constructCard(() => _game!.testActors.constructLocation("washroom"), _game!.testActors.constructCardTitle("washroom")),
-        _constructCard(() => _game!.testActors.constructLocation("beauty"), _game!.testActors.constructCardTitle("beauty")),
-        _constructCard(() => _game!.testActors.constructLocation("jewelry"), _game!.testActors.constructCardTitle("jewelry")),
-        _constructCard(() => _game!.testActors.constructLocation("restaurant"), _game!.testActors.constructCardTitle("restaurant")),
-        _constructCard(() => _game!.testActors.constructLocation("port"), _game!.testActors.constructCardTitle("port")),
-        _constructCard(() => _game!.testActors.constructLocation("palace"), _game!.testActors.constructCardTitle("palace")),
-        _constructCard(() => _game!.testActors.constructOldMan(), _game!.testActors.constructCardTitle("temple")),
-        _constructCard(() => _game!.testActors.constructWanted(context), const Text("wanted")),
-        _constructCard(() => _game!.testCase.getFinal(), const Text("final")),
-      ],
+      children: cards.sublist(2) + [wanted],
     );
   }
 
@@ -469,7 +437,7 @@ class _GameTabState extends State<GameTab> {
             if(widget.hasData) {
               return widget.requireData;
             } else {
-              return const Text("waiting for data");
+              return const CircularProgressIndicator();
             }
           }
       );
