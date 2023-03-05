@@ -26,15 +26,7 @@ class _GameState {
     Map<String, dynamic> cases = jsonDecode(await rootBundle.loadString(Settings.casesConfigurationFile));
     Map<String, dynamic> pictures = jsonDecode(await rootBundle.loadString(Settings.picturesConfigurationFile));
     final Map<String, dynamic> chosenCase = pick(cases["cases"] as List<dynamic>) as Map<String, dynamic>;
-    final _Case constructedCase = _Case(
-      title: chosenCase["title"]!,
-      initialPicture: chosenCase["initialPicture"],
-      initialLines: chosenCase["initialText"]!,
-      finalPicture: chosenCase["finalPicture"],
-      finalLines: chosenCase["finalText"]!,
-      failPicture: chosenCase["failPicture"],
-      failLines: chosenCase["failText"]!,
-    );
+    final _Case constructedCase = _Case.fromJSON(chosenCase);
     final List<_Actor> people = (pictures["people"] as List<dynamic>).map((actor) => _Actor(name: actor["name"]!, filePrefix: actor["filePrefix"]!)).toList();
     final List<_Actor> animals = (pictures["animals"] as List<dynamic>).map((actor) => _Actor(name: actor["name"]!, filePrefix: actor["filePrefix"]!)).toList();
     final _Actors actors = _Actors.construct(people, animals);
@@ -44,28 +36,20 @@ class _GameState {
   }
 
   static void store(_GameState state, SharedPreferences preferences) async {
-
+    String json = jsonEncode({ "case": state.crime.toJSON(), "actors": state.actors.toJSON() });
+    debugPrint(json);
+    preferences.setString("case", json);
   }
 
   static Future<_GameState> load(String encodedState) async {
     final Map<String, dynamic> state = jsonDecode(encodedState);
-    final Map<String, dynamic> caseJSON = state["case"]!;
-    final _Case crime = _Case(
-      title: caseJSON["title"]!,
-      initialPicture: caseJSON["initialPicture"],
-      initialLines: caseJSON["initialText"]!,
-      finalPicture: caseJSON["finalPicture"],
-      finalLines: caseJSON["finalText"]!,
-      failPicture: caseJSON["failPicture"],
-      failLines: caseJSON["failText"]!,
-    );
+    final _Case crime = _Case.fromJSON(state["case"]);
     final _Actors actors = _Actors.fromJSON(state["actors"]);
     return _GameState._(crime: crime, actors: actors);
   }
 
   static Future<_GameState> constructOrLoad() async {
     final preferences = await SharedPreferences.getInstance();
-    debugPrint(preferences.containsKey("case").toString());
     return preferences.containsKey("case") ? load(preferences.getString("case")!) : constructAndStore(preferences);
   }
 }
@@ -74,6 +58,24 @@ class _Actor {
   final String name;
   final String filePrefix;
   _Actor({required this.name, required this.filePrefix});
+
+  static _Actor fromJSON(Map<String, dynamic> mapping) {
+    assert(mapping.containsKey("name"));
+    assert(mapping.containsKey("filePrefix"));
+    final String name = mapping["name"];
+    final String filePrefix = mapping["filePrefix"];
+    return _Actor(
+      name: name,
+      filePrefix: filePrefix,
+    );
+  }
+
+  Map<String, String> toJSON() {
+    return {
+      "name": name,
+      "filePrefix": filePrefix,
+    };
+  }
 }
 
 class _Actors {
@@ -162,16 +164,47 @@ class _Actors {
   }
 
   static _Actors fromJSON(Map<String, dynamic> mapping) {
+    assert(mapping.containsKey("perpetrator"));
+    assert(mapping.containsKey("hidingPlace"));
+    assert(mapping.containsKey("suspects"));
+    assert(mapping.containsKey("suspectPersons"));
+    assert(mapping.containsKey("citizens"));
+    assert(mapping.containsKey("information"));
+    assert(mapping.containsKey("liar"));
+    assert(mapping.containsKey("specialInformation"));
+    String perpetrator = mapping["perpetrator"]!;
+    String hidingPlace = mapping["hidingPlace"]!;
+    assert(mapping["suspects"]!.runtimeType == List);
+    assert(!(mapping["suspects"] as List<dynamic>).any((e) => e.runtimeType != String));
+    List<String> suspects = (mapping["suspects"]! as List<dynamic>).map((e) => e as String).toList(growable: false);
+    LinkedHashMap<String, _Actor> suspectPersons = LinkedHashMap.of((mapping["suspectPersons"]! as Map<String, dynamic>).map((key, value) => MapEntry(key, _Actor.fromJSON(value))));
+    Map<String, _Actor> citizens = (mapping["citizens"]! as Map<String, dynamic>).map((key, value) => MapEntry(key, _Actor.fromJSON(value)));
+    Map<String, String> information = (mapping["information"]! as Map<String, dynamic>).map((key, value) => MapEntry(key, value as String));
+    String liar = mapping["liar"]!;
+    Map<String, _Actor> specialInformation = (mapping["specialInformation"]! as Map<String, dynamic>).map((key, value) => MapEntry(key, _Actor.fromJSON(value)));
     return _Actors._(
-      perpetrator: mapping["perpetrator"],
-      hidingPlace: mapping["hidingPlace"],
-      suspects: mapping["suspects"] as List<String>,
-      suspectPersons: LinkedHashMap.of((mapping["suspectPersons"] as Map<String, dynamic>).map((key, value) => MapEntry<String, _Actor>(key, _Actor(name: value["name"]!, filePrefix: value["filePrefix"]!)))),
-      citizens: (mapping["citizens"] as Map<String, dynamic>).map((key, value) => MapEntry<String, _Actor>(key, _Actor(name: value["name"]!, filePrefix: value["filePrefix"]!))),
-      information: (mapping["information"] as Map<String, String>),
-      liar: mapping["liar"],
-      specialInformation: (mapping["specialInformation"] as Map<String, dynamic>).map((key, value) => MapEntry<String, _Actor>(key, _Actor(name: value["name"]!, filePrefix: value["filePrefix"]!))),
+      perpetrator: perpetrator,
+      hidingPlace: hidingPlace,
+      suspects: suspects,
+      suspectPersons: suspectPersons,
+      citizens: citizens,
+      information: information,
+      liar: liar,
+      specialInformation: specialInformation,
     );
+  }
+
+  Map<String, dynamic> toJSON() {
+    return {
+      "perpetrator": perpetrator,
+      "hidingPlace": hidingPlace,
+      "suspects": suspects,
+      "suspectPersons": suspectPersons.map((key, value) => MapEntry(key, value.toJSON())),
+      "citizens": citizens.map((key, value) => MapEntry(key, value.toJSON())),
+      "information": information,
+      "liar": liar,
+      "specialInformation": specialInformation.map((key, value) => MapEntry(key, value.toJSON())),
+    };
   }
 
   bool _getProperty(String which) {
@@ -324,6 +357,40 @@ class _Case {
   final String failLines;
 
   const _Case({required this.title, this.initialPicture, required this.initialLines, this.finalPicture, required this.finalLines, this.failPicture, required this.failLines});
+  static _Case fromJSON(Map<String, dynamic> mapping) {
+    assert(mapping.containsKey("title"));
+    assert(mapping.containsKey("initialText"));
+    assert(mapping.containsKey("finalText"));
+    assert(mapping.containsKey("failText"));
+    String title = mapping["title"]!;
+    String initialLines = mapping["initialText"]!;
+    String finalLines = mapping["finalText"]!;
+    String failLines = mapping["failText"]!;
+    String? initialPicture = mapping["initialPicture"];
+    String? finalPicture = mapping["finalPicture"];
+    String? failPicture = mapping["failPicture"];
+    return _Case(
+      title: title,
+      initialLines: initialLines,
+      finalLines: finalLines,
+      failLines: failLines,
+      initialPicture: initialPicture,
+      finalPicture: finalPicture,
+      failPicture: failPicture,
+    );
+  }
+
+  Map<String, dynamic> toJSON() {
+    return {
+      "title": title,
+      "initialPicture": initialPicture,
+      "initialText": initialLines,
+      "finalPicture": finalPicture,
+      "finalText": finalLines,
+      "failPicture": failPicture,
+      "failText": failLines,
+    };
+  }
 
   Future<StoryScreen> getInitial() async => _constructStoryScreen(initialPicture, initialLines);
   Future<StoryScreen> getFinal() async => _constructStoryScreen(finalPicture, finalLines);
@@ -380,6 +447,7 @@ class _GameTabState extends State<GameTab> {
   void initializeNewGame() {
     setState(() {
       _game = null;
+      SharedPreferences.getInstance().then((value) => value.remove("case"));
     });
   }
 
@@ -392,9 +460,7 @@ class _GameTabState extends State<GameTab> {
 
   Future<Widget> _getCase(BuildContext context) async {
     // check for stored case
-    debugPrint(_game == null ? "null" : "non-null");
     _game ??= await _GameState.constructOrLoad();
-    debugPrint(_game == null ? "null" : "non-null");
     // construct case
     _GameState actualGame = _game!;
     List<Widget> cards = await Future.wait(
