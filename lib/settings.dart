@@ -7,6 +7,9 @@ class Settings {
   static int initialFadeTime = 1000;
   static double pictureHeight = 250;
 
+  static String casesConfigurationFile = "configurations/cases.json";
+  static String picturesConfigurationFile = "configurations/pictures.json";
+
   static Map<String, MaterialColor> hidingPlacesColors = {
     "yellow": Colors.yellow,
     "red": Colors.red,

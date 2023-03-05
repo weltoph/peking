@@ -35,4 +35,11 @@ class Strings {
     "temple": "Temple",
     "market": "Markt",
   };
+
+  static const Map<String, String> hidingNames = {
+    "yellow": "Gelber Drache",
+    "red": "Roter Drache",
+    "blue": "Blauer Drache",
+    "green": "Grüner Drache",
+  };
 }

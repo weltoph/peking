@@ -1,6 +1,8 @@
 import 'dart:collection';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'storyscreen.dart';
 import 'strings.dart';
 import 'utilities.dart';
@@ -15,97 +17,57 @@ class GameTab extends StatefulWidget {
 }
 
 class _GameState {
-  _Case testCase = const _Case(
-    title: "Der zerbrochene Krug",
-    initialPicture: "christophtalking.jpg",
-    initialLines: "broken-initial.txt",
-    finalLines: "broken-final.txt"
-  );
+  final _Case crime;
+  final _Actors actors;
 
-  _Actors testActors = _Actors.construct(
-    [
-      _Actor(
-        name: "Christoph",
-        filePrefix: "christoph"
-      ),
-      _Actor(
-          name: "Christoph",
-          filePrefix: "christoph"
-      ),
-      _Actor(
-          name: "Christoph",
-          filePrefix: "christoph"
-      ),
-      _Actor(
-          name: "Christoph",
-          filePrefix: "christoph"
-      ),
-      _Actor(
-          name: "Christoph",
-          filePrefix: "christoph"
-      ),
-      _Actor(
-          name: "Christoph",
-          filePrefix: "christoph"
-      ),
-      _Actor(
-          name: "Christoph",
-          filePrefix: "christoph"
-      ),
-      _Actor(
-          name: "Christoph",
-          filePrefix: "christoph"
-      ),
-      _Actor(
-          name: "Christoph",
-          filePrefix: "christoph"
-      ),
-      _Actor(
-          name: "Christoph",
-          filePrefix: "christoph"
-      ),
-      _Actor(
-          name: "Christoph",
-          filePrefix: "christoph"
-      ),
-      _Actor(
-          name: "Christoph",
-          filePrefix: "christoph"
-      ),
-      _Actor(
-          name: "Christoph",
-          filePrefix: "christoph"
-      ),
-      _Actor(
-          name: "Christoph",
-          filePrefix: "christoph"
-      ),
-      _Actor(
-          name: "Christoph",
-          filePrefix: "christoph"
-      ),
-      _Actor(
-          name: "Christoph",
-          filePrefix: "christoph"
-      ),
-      _Actor(
-          name: "Christoph",
-          filePrefix: "christoph"
-      ),
-      _Actor(
-          name: "Christoph",
-          filePrefix: "christoph"
-      ),
-    ], [
-    _Actor(
-        name: "Sam",
-        filePrefix: "sam"
-    ),
-    _Actor(
-        name: "Sam",
-        filePrefix: "sam"
-    ),
-  ]);
+  _GameState._({required this.crime, required this.actors});
+
+  static Future<_GameState> constructAndStore(SharedPreferences preferences) async {
+    Map<String, dynamic> cases = jsonDecode(await rootBundle.loadString(Settings.casesConfigurationFile));
+    Map<String, dynamic> pictures = jsonDecode(await rootBundle.loadString(Settings.picturesConfigurationFile));
+    final Map<String, dynamic> chosenCase = pick(cases["cases"] as List<dynamic>) as Map<String, dynamic>;
+    final _Case constructedCase = _Case(
+      title: chosenCase["title"]!,
+      initialPicture: chosenCase["initialPicture"],
+      initialLines: chosenCase["initialText"]!,
+      finalPicture: chosenCase["finalPicture"],
+      finalLines: chosenCase["finalText"]!,
+      failPicture: chosenCase["failPicture"],
+      failLines: chosenCase["failText"]!,
+    );
+    final List<_Actor> people = (pictures["people"] as List<dynamic>).map((actor) => _Actor(name: actor["name"]!, filePrefix: actor["filePrefix"]!)).toList();
+    final List<_Actor> animals = (pictures["animals"] as List<dynamic>).map((actor) => _Actor(name: actor["name"]!, filePrefix: actor["filePrefix"]!)).toList();
+    final _Actors actors = _Actors.construct(people, animals);
+    final _GameState state = _GameState._(crime: constructedCase, actors: actors);
+    store(state, preferences);
+    return state;
+  }
+
+  static void store(_GameState state, SharedPreferences preferences) async {
+
+  }
+
+  static Future<_GameState> load(String encodedState) async {
+    final Map<String, dynamic> state = jsonDecode(encodedState);
+    final Map<String, dynamic> caseJSON = state["case"]!;
+    final _Case crime = _Case(
+      title: caseJSON["title"]!,
+      initialPicture: caseJSON["initialPicture"],
+      initialLines: caseJSON["initialText"]!,
+      finalPicture: caseJSON["finalPicture"],
+      finalLines: caseJSON["finalText"]!,
+      failPicture: caseJSON["failPicture"],
+      failLines: caseJSON["failText"]!,
+    );
+    final _Actors actors = _Actors.fromJSON(state["actors"]);
+    return _GameState._(crime: crime, actors: actors);
+  }
+
+  static Future<_GameState> constructOrLoad() async {
+    final preferences = await SharedPreferences.getInstance();
+    debugPrint(preferences.containsKey("case").toString());
+    return preferences.containsKey("case") ? load(preferences.getString("case")!) : constructAndStore(preferences);
+  }
 }
 
 class _Actor {
@@ -197,6 +159,19 @@ class _Actors {
         information: information,
         liar: liar,
         specialInformation: specialInformation);
+  }
+
+  static _Actors fromJSON(Map<String, dynamic> mapping) {
+    return _Actors._(
+      perpetrator: mapping["perpetrator"],
+      hidingPlace: mapping["hidingPlace"],
+      suspects: mapping["suspects"] as List<String>,
+      suspectPersons: LinkedHashMap.of((mapping["suspectPersons"] as Map<String, dynamic>).map((key, value) => MapEntry<String, _Actor>(key, _Actor(name: value["name"]!, filePrefix: value["filePrefix"]!)))),
+      citizens: (mapping["citizens"] as Map<String, dynamic>).map((key, value) => MapEntry<String, _Actor>(key, _Actor(name: value["name"]!, filePrefix: value["filePrefix"]!))),
+      information: (mapping["information"] as Map<String, String>),
+      liar: mapping["liar"],
+      specialInformation: (mapping["specialInformation"] as Map<String, dynamic>).map((key, value) => MapEntry<String, _Actor>(key, _Actor(name: value["name"]!, filePrefix: value["filePrefix"]!))),
+    );
   }
 
   bool _getProperty(String which) {
@@ -300,6 +275,17 @@ class _Actors {
     );
   }
 
+  Future<Widget> constructNinja() async {
+    List<Widget> finalChildren = List.empty(growable: true);
+    finalChildren.add(StoryScreen.constructTitle(specialInformation["market"]!.name));
+    finalChildren.add(StoryScreen.constructPicture("${specialInformation["market"]!.filePrefix}run.jpg"));
+    finalChildren.add(StoryScreen.constructLine("I smell the crime! I run to ${Strings.hidingNames[hidingPlace]}!"));
+
+    return StoryScreen(
+      widgets: finalChildren,
+    );
+  }
+
   Widget _getSizedAvatar(_Actor of) {
     return Image.asset(
       "pictures/${of.filePrefix}avatar.jpg",
@@ -326,7 +312,6 @@ class _Actors {
       ],
     );
   }
-
 }
 
 class _Case {
@@ -335,11 +320,14 @@ class _Case {
   final String initialLines;
   final String? finalPicture;
   final String finalLines;
+  final String? failPicture;
+  final String failLines;
 
-  const _Case({required this.title, this.initialPicture, required this.initialLines, this.finalPicture, required this.finalLines});
+  const _Case({required this.title, this.initialPicture, required this.initialLines, this.finalPicture, required this.finalLines, this.failPicture, required this.failLines});
 
   Future<StoryScreen> getInitial() async => _constructStoryScreen(initialPicture, initialLines);
   Future<StoryScreen> getFinal() async => _constructStoryScreen(finalPicture, finalLines);
+  Future<StoryScreen> getFail() async => _constructStoryScreen(failPicture, failLines);
 
   Future<StoryScreen> _constructStoryScreen(String? picture, String text) async {
     List<Widget> finalChildren = List.empty(growable: true);
@@ -391,7 +379,7 @@ class _GameTabState extends State<GameTab> {
 
   void initializeNewGame() {
     setState(() {
-      _game = _GameState();
+      _game = null;
     });
   }
 
@@ -404,44 +392,45 @@ class _GameTabState extends State<GameTab> {
 
   Future<Widget> _getCase(BuildContext context) async {
     // check for stored case
-    // otherwise create case
+    debugPrint(_game == null ? "null" : "non-null");
+    _game ??= await _GameState.constructOrLoad();
+    debugPrint(_game == null ? "null" : "non-null");
     // construct case
+    _GameState actualGame = _game!;
     List<Widget> cards = await Future.wait(
         [
-          _game!.testCase.getFinal(),
-          _game!.testCase.getInitial(),
-          _constructCard(() => _game!.testActors.constructLocation("washroom"), _game!.testActors.constructCardTitle("washroom")),
-          _constructCard(() => _game!.testActors.constructLocation("beauty"), _game!.testActors.constructCardTitle("beauty")),
-          _constructCard(() => _game!.testActors.constructLocation("jewelry"), _game!.testActors.constructCardTitle("jewelry")),
-          _constructCard(() => _game!.testActors.constructLocation("restaurant"), _game!.testActors.constructCardTitle("restaurant")),
-          _constructCard(() => _game!.testActors.constructLocation("port"), _game!.testActors.constructCardTitle("port")),
-          _constructCard(() => _game!.testActors.constructLocation("palace"), _game!.testActors.constructCardTitle("palace")),
-          _constructCard(() => _game!.testActors.constructOldMan(), _game!.testActors.constructCardTitle("temple")),
+          actualGame.crime.getFinal(),
+          actualGame.crime.getInitial(),
+          actualGame.crime.getFail(),
+          _constructCard(() => actualGame.actors.constructLocation("washroom"), actualGame.actors.constructCardTitle("washroom")),
+          _constructCard(() => actualGame.actors.constructLocation("beauty"), actualGame.actors.constructCardTitle("beauty")),
+          _constructCard(() => actualGame.actors.constructLocation("jewelry"), actualGame.actors.constructCardTitle("jewelry")),
+          _constructCard(() => actualGame.actors.constructLocation("restaurant"), actualGame.actors.constructCardTitle("restaurant")),
+          _constructCard(() => actualGame.actors.constructLocation("port"), actualGame.actors.constructCardTitle("port")),
+          _constructCard(() => actualGame.actors.constructLocation("palace"), actualGame.actors.constructCardTitle("washroom")),
+          _constructCard(() => actualGame.actors.constructOldMan(), actualGame.actors.constructCardTitle("temple")),
+          _constructCard(() => actualGame.actors.constructNinja(), actualGame.actors.constructCardTitle("market")),
         ]
     );
-    Widget wanted = await _constructCard(() => _game!.testActors.constructWanted(context, cards[0], cards[1]), const Text("wanted"));
+    Widget wanted = await _constructCard(() => actualGame.actors.constructWanted(context, cards[0], cards[1]), const Text("Verdächtige"));
     return ListView(
       scrollDirection: Axis.vertical,
-      children: cards.sublist(2) + [wanted],
+      children: cards.sublist(3) + [wanted],
     );
   }
 
 
   Widget _build(BuildContext context) {
-    if(_game == null) {
-      return const Text(Strings.noGameAvailable);
-    } else {
-      return FutureBuilder<Widget>(
-          future: _getCase(context),
-          builder: (context, AsyncSnapshot<Widget> widget) {
-            if(widget.hasData) {
-              return widget.requireData;
-            } else {
-              return const CircularProgressIndicator();
-            }
+    return FutureBuilder<Widget>(
+        future: _getCase(context),
+        builder: (context, AsyncSnapshot<Widget> widget) {
+          if(widget.hasData) {
+            return widget.requireData;
+          } else {
+            return const CircularProgressIndicator();
           }
-      );
-    }
+        }
+    );
   }
 
   @override
