@@ -220,14 +220,14 @@ class _Actors {
     finalChildren.add(StoryScreen.constructPicture("${citizens[location]!.filePrefix}talking.jpg"));
     // does not know anything
     if(!information.containsKey(location)) {
-      finalChildren.add(StoryScreen.constructLine("I don't know anything!"));
+      finalChildren.add(StoryScreen.constructLine("Es tut mir leid; ich habe von diesem schrecklichen Verbrechen gar nichts mitbekommen."));
     } else {
       String dimension = information[location] as String;
       bool result = _getProperty(dimension);
       if(liar == location) {
         result = !result;
       }
-      finalChildren.add(StoryScreen.constructLine("$dimension: $result"));
+      finalChildren.add(StoryScreen.constructLine(Strings.sentences[dimension]![result]!));
     }
     return StoryScreen(
       widgets: finalChildren,
@@ -296,12 +296,12 @@ class _Actors {
     // does not know anything
     if(!information.containsKey(liar)) {
       finalChildren.add(StoryScreen.constructPicture("${specialInformation["temple"]!.filePrefix}content.jpg"));
-      finalChildren.add(StoryScreen.constructLine("No evil, so sleepy!"));
+      finalChildren.add(StoryScreen.constructLine("Eine Aura der Ruhe umgibt diesen Ort."));
+      finalChildren.add(StoryScreen.constructLine("Du fühlst, dass es in dieser Stadt keinen Lügner geben kann."));
     } else {
       finalChildren.add(StoryScreen.constructPicture("${specialInformation["temple"]!.filePrefix}mad.jpg"));
-      finalChildren.add(StoryScreen.constructLine("No time for sleep!"));
-      finalChildren.add(StoryScreen.constructLine("${citizens[liar]!.name} at ${Strings.locationNames[liar]} is evil."));
-      finalChildren.add(StoryScreen.constructLine("For Justice!"));
+      finalChildren.add(StoryScreen.constructLine("Du siehst wie ${specialInformation["temple"]!.name} Richtung ${Strings.locationNames[liar]} läuft."));
+      finalChildren.add(StoryScreen.constructLine("Wahrscheinlich lügt ${citizens[liar]!.name}."));
     }
     return StoryScreen(
       widgets: finalChildren,
@@ -312,7 +312,8 @@ class _Actors {
     List<Widget> finalChildren = List.empty(growable: true);
     finalChildren.add(StoryScreen.constructTitle(specialInformation["market"]!.name));
     finalChildren.add(StoryScreen.constructPicture("${specialInformation["market"]!.filePrefix}run.jpg"));
-    finalChildren.add(StoryScreen.constructLine("I smell the crime! I run to ${Strings.hidingNames[hidingPlace]}!"));
+    finalChildren.add(StoryScreen.constructLine("Die feine Spürnase schlägt an."));
+    finalChildren.add(StoryScreen.constructLine("Du siehst ${specialInformation["market"]!.name} zum ${Strings.hidingNames[hidingPlace]} laufen!"));
 
     return StoryScreen(
       widgets: finalChildren,
@@ -463,25 +464,28 @@ class _GameTabState extends State<GameTab> {
     _game ??= await _GameState.constructOrLoad();
     // construct case
     _GameState actualGame = _game!;
-    List<Widget> cards = await Future.wait(
-        [
-          actualGame.crime.getFinal(),
-          actualGame.crime.getInitial(),
-          actualGame.crime.getFail(),
-          _constructCard(() => actualGame.actors.constructLocation("washroom"), actualGame.actors.constructCardTitle("washroom")),
-          _constructCard(() => actualGame.actors.constructLocation("beauty"), actualGame.actors.constructCardTitle("beauty")),
-          _constructCard(() => actualGame.actors.constructLocation("jewelry"), actualGame.actors.constructCardTitle("jewelry")),
-          _constructCard(() => actualGame.actors.constructLocation("restaurant"), actualGame.actors.constructCardTitle("restaurant")),
-          _constructCard(() => actualGame.actors.constructLocation("port"), actualGame.actors.constructCardTitle("port")),
-          _constructCard(() => actualGame.actors.constructLocation("palace"), actualGame.actors.constructCardTitle("washroom")),
-          _constructCard(() => actualGame.actors.constructOldMan(), actualGame.actors.constructCardTitle("temple")),
-          _constructCard(() => actualGame.actors.constructNinja(), actualGame.actors.constructCardTitle("market")),
-        ]
-    );
-    Widget wanted = await _constructCard(() => actualGame.actors.constructWanted(context, cards[0], cards[1]), const Text("Verdächtige"));
+
+    Widget finalScreen = await actualGame.crime.getFinal();
+    Widget initialScreen = await _constructCard(() => actualGame.crime.getInitial(), const Text("Der Fall", style: TextStyle(
+      fontFamily: "Shanghai",
+      fontSize: 30,
+    ),));
+    Widget failScreen = await actualGame.crime.getFail();
+    Widget washroom = await _constructCard(() => actualGame.actors.constructLocation("washroom"), actualGame.actors.constructCardTitle("washroom"));
+    Widget beauty = await _constructCard(() => actualGame.actors.constructLocation("beauty"), actualGame.actors.constructCardTitle("beauty"));
+    Widget jewelry = await _constructCard(() => actualGame.actors.constructLocation("jewelry"), actualGame.actors.constructCardTitle("jewelry"));
+    Widget restaurant = await _constructCard(() => actualGame.actors.constructLocation("restaurant"), actualGame.actors.constructCardTitle("restaurant"));
+    Widget port = await _constructCard(() => actualGame.actors.constructLocation("port"), actualGame.actors.constructCardTitle("port"));
+    Widget palace = await _constructCard(() => actualGame.actors.constructLocation("palace"), actualGame.actors.constructCardTitle("washroom"));
+    Widget temple = await _constructCard(() => actualGame.actors.constructOldMan(), actualGame.actors.constructCardTitle("temple"));
+    Widget market = await _constructCard(() => actualGame.actors.constructNinja(), actualGame.actors.constructCardTitle("market"));
+    Widget wanted = await _constructCard(() => actualGame.actors.constructWanted(context, finalScreen, failScreen), const Text("Verdächtige", style: TextStyle(
+      fontFamily: "Shanghai",
+      fontSize: 30,
+    ),));
     return ListView(
       scrollDirection: Axis.vertical,
-      children: cards.sublist(3) + [wanted],
+      children: [initialScreen, wanted, washroom, beauty, jewelry, restaurant, port, palace, temple, market],
     );
   }
 

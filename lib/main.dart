@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        primarySwatch: Colors.red,
+        primarySwatch: Colors.green,
       ),
       home: const MainTabBar(),
     );
@@ -30,8 +30,8 @@ class MainTabBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      initialIndex: 1,
-      length: 3,
+      initialIndex: 0,
+      length: 1,
       child: Scaffold(
         appBar: PreferredSize(
           preferredSize: const Size.fromHeight(50),
@@ -42,8 +42,6 @@ class MainTabBar extends StatelessWidget {
               child: TabBar(
                   tabs: <Widget>[
                     Tab(text: Strings.gameTabTitle),
-                    Tab(text: Strings.galleryTabTitle),
-                    Tab(text: Strings.settingTabTitle),
                   ]
               ),
             ),
@@ -52,8 +50,6 @@ class MainTabBar extends StatelessWidget {
         body: const TabBarView(
           children: <Widget>[
             GameTab(),
-            Center( child: Text('this is the second tab'), ),
-            Center( child: Text('this is the third tab'), ),
           ]
         ),
       )
