@@ -476,7 +476,7 @@ class _GameTabState extends State<GameTab> {
     Widget jewelry = await _constructCard(() => actualGame.actors.constructLocation("jewelry"), actualGame.actors.constructCardTitle("jewelry"));
     Widget restaurant = await _constructCard(() => actualGame.actors.constructLocation("restaurant"), actualGame.actors.constructCardTitle("restaurant"));
     Widget port = await _constructCard(() => actualGame.actors.constructLocation("port"), actualGame.actors.constructCardTitle("port"));
-    Widget palace = await _constructCard(() => actualGame.actors.constructLocation("palace"), actualGame.actors.constructCardTitle("washroom"));
+    Widget palace = await _constructCard(() => actualGame.actors.constructLocation("palace"), actualGame.actors.constructCardTitle("palace"));
     Widget temple = await _constructCard(() => actualGame.actors.constructOldMan(), actualGame.actors.constructCardTitle("temple"));
     Widget market = await _constructCard(() => actualGame.actors.constructNinja(), actualGame.actors.constructCardTitle("market"));
     Widget wanted = await _constructCard(() => actualGame.actors.constructWanted(context, finalScreen, failScreen), const Text("Verdächtige", style: TextStyle(
